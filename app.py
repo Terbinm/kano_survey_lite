@@ -1,5 +1,6 @@
 # app.py
 from flask import Flask, render_template, request, jsonify, redirect, url_for
+from constants import KANO_SETTINGS, KANO_COLORS, KANO_TEXT_COLORS, KANO_BG_COLORS, KANO_DESCRIPTIONS
 from models import db, Survey, Response, Question
 from config import Config
 import os
@@ -99,25 +100,29 @@ def submit_survey():
 @app.route('/results')
 def view_results():
     """查看統計結果"""
+    # 取得所有問題（包括已停用的）
+    all_questions = Question.query.all()
+    questions_dict = {q.id: q for q in all_questions}
+
     # 取得所有回應
     responses = Response.query.all()
 
     # 初始化結果統計
     results = {}
     categories = ['A', 'O', 'M', 'I', 'R', 'Q']
-    questions = get_questions()
 
-    # 初始化每個問題的分類計數
-    for question in questions:
-        results[question['id']] = {cat: 0 for cat in categories}
+    # 為所有問題初始化計數器
+    for question_id in questions_dict.keys():
+        results[question_id] = {cat: 0 for cat in categories}
 
     # 統計每個問題的各分類數量
     for response in responses:
-        results[response.question_id][response.kano_category] += 1
+        if response.question_id in results:
+            results[response.question_id][response.kano_category] += 1
 
     return render_template('results.html',
                            results=results,
-                           questions=questions,
+                           questions=questions_dict,
                            categories=categories)
 
 
@@ -125,7 +130,10 @@ def view_results():
 def view_responses():
     """查看個別回應"""
     surveys = Survey.query.order_by(Survey.timestamp.desc()).all()
-    questions = get_questions()
+
+    # 取得所有問題（包括已停用的）
+    all_questions = Question.query.all()
+    questions_dict = {q.id: q for q in all_questions}
 
     # 建立選項對照表
     response_options = {
@@ -138,7 +146,7 @@ def view_responses():
 
     return render_template('responses.html',
                            surveys=surveys,
-                           questions=questions,
+                           questions=questions_dict,
                            response_options=response_options)
 
 
@@ -268,6 +276,17 @@ def delete_question(question_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.context_processor
+def utility_processor():
+    """提供模板使用的工具函數"""
+    return {
+        'kano_settings': KANO_SETTINGS,
+        'kano_colors': KANO_COLORS,
+        'kano_text_colors': KANO_TEXT_COLORS,
+        'kano_bg_colors': KANO_BG_COLORS,
+        'kano_descriptions': KANO_DESCRIPTIONS
+    }
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=12345)  # 啟動服務器

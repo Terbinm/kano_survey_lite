@@ -14,72 +14,39 @@
                     <th class="border p-2 text-left">題號</th>
                     <th class="border p-2 text-left">正向問題</th>
                     <th class="border p-2 text-left">負向問題</th>
-                    <th class="border p-2 text-center">A</th>
-                    <th class="border p-2 text-center">O</th>
-                    <th class="border p-2 text-center">M</th>
-                    <th class="border p-2 text-center">I</th>
-                    <th class="border p-2 text-center">R</th>
-                    <th class="border p-2 text-center">Q</th>
+                    {% for category in categories %}
+                    <th class="border p-2 {{ kano_text_colors[category] }}">{{ category }}</th>
+                    {% endfor %}
                 </tr>
             </thead>
             <tbody>
-                {% for question in questions %}
-                <tr class="hover:bg-gray-50">
-                    <td class="border p-2">{{ question.id }}</td>
-                    <td class="border p-2">{{ question.positive }}</td>
-                    <td class="border p-2">{{ question.negative }}</td>
-                    <td class="border p-2 text-center font-semibold {% if results[question.id]['A'] > 0 %}text-blue-600{% endif %}">
-                        {{ results[question.id]['A'] or 0 }}
+                {% for question_id, counts in results.items() %}
+                <tr>
+                    <td class="border p-2">{{ question_id }}</td>
+                    <td class="border p-2">{{ questions[question_id].positive }}</td>
+                    <td class="border p-2">{{ questions[question_id].negative }}</td>
+                    {% for category in categories %}
+                    <td class="border p-2 text-center font-semibold {{ kano_text_colors[category] if counts[category] > 0 }}">
+                        {{ counts[category] }}
                     </td>
-                    <td class="border p-2 text-center font-semibold {% if results[question.id]['O'] > 0 %}text-green-600{% endif %}">
-                        {{ results[question.id]['O'] or 0 }}
-                    </td>
-                    <td class="border p-2 text-center font-semibold {% if results[question.id]['M'] > 0 %}text-red-600{% endif %}">
-                        {{ results[question.id]['M'] or 0 }}
-                    </td>
-                    <td class="border p-2 text-center font-semibold {% if results[question.id]['I'] > 0 %}text-gray-600{% endif %}">
-                        {{ results[question.id]['I'] or 0 }}
-                    </td>
-                    <td class="border p-2 text-center font-semibold {% if results[question.id]['R'] > 0 %}text-yellow-600{% endif %}">
-                        {{ results[question.id]['R'] or 0 }}
-                    </td>
-                    <td class="border p-2 text-center font-semibold {% if results[question.id]['Q'] > 0 %}text-purple-600{% endif %}">
-                        {{ results[question.id]['Q'] or 0 }}
-                    </td>
+                    {% endfor %}
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 
-    <!-- KANO 模型分類說明 -->
-    <div class="bg-gray-50 p-4 rounded-lg">
-        <h2 class="text-xl font-bold mb-4">KANO 模型分類說明：</h2>
+    <div class="mt-8">
+        <h2 class="text-xl font-bold mb-4">KANO 分類說明：</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div class="p-3 bg-white rounded shadow">
-                <h3 class="font-bold text-blue-600">A (Attractive) - 魅力品質</h3>
-                <p class="text-sm">提供時會令顧客滿意，但不提供也不會不滿意</p>
+            {% for category, settings in kano_settings.items() %}
+            <div class="p-4 bg-gray-50 rounded-lg">
+                <h3 class="font-bold {{ kano_text_colors[category] }}">
+                    {{ category }} ({{ settings.name }}) - {{ settings.description.split(' - ')[0] }}
+                </h3>
+                <p class="mt-2">{{ settings.description.split(' - ')[1] }}</p>
             </div>
-            <div class="p-3 bg-white rounded shadow">
-                <h3 class="font-bold text-green-600">O (One-dimensional) - 一維品質</h3>
-                <p class="text-sm">提供時會令顧客滿意，不提供會令顧客不滿意</p>
-            </div>
-            <div class="p-3 bg-white rounded shadow">
-                <h3 class="font-bold text-red-600">M (Must-be) - 必要品質</h3>
-                <p class="text-sm">提供時顧客視為理所當然，不提供會令顧客不滿意</p>
-            </div>
-            <div class="p-3 bg-white rounded shadow">
-                <h3 class="font-bold text-gray-600">I (Indifferent) - 無差異品質</h3>
-                <p class="text-sm">提供與否都不會影響顧客滿意度</p>
-            </div>
-            <div class="p-3 bg-white rounded shadow">
-                <h3 class="font-bold text-yellow-600">R (Reverse) - 反向品質</h3>
-                <p class="text-sm">提供反而會令顧客不滿意</p>
-            </div>
-            <div class="p-3 bg-white rounded shadow">
-                <h3 class="font-bold text-purple-600">Q (Questionable) - 可疑結果</h3>
-                <p class="text-sm">問卷回答可能有誤</p>
-            </div>
+            {% endfor %}
         </div>
     </div>
 </div>

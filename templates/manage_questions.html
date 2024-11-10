@@ -87,6 +87,18 @@
             {% endfor %}
         </div>
     </div>
+
+    <div class="mt-8 bg-gray-50 p-4 rounded-lg">
+        <h2 class="text-xl font-semibold mb-4">KANO 分類參考</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for category, settings in kano_settings.items() %}
+            <div class="p-3 bg-white rounded shadow">
+                <h3 class="font-bold {{ kano_text_colors[category] }}">{{ category }}</h3>
+                <p class="text-sm mt-1">{{ settings.description }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
 </div>
 
 <script>

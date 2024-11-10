@@ -37,26 +37,23 @@
                     <tr>
                         <td class="border p-2">{{ response.question_id }}</td>
                         <td class="border p-2">
-                            {% for q in questions if q.id == response.question_id %}
-                                {{ q.positive }}
-                            {% endfor %}
+                             {% if response.question_id in questions %}
+                                {{ questions[response.question_id].positive }}
+                            {% else %}
+                                <span class="text-gray-400">問題已刪除</span>
+                            {% endif %}
                         </td>
                         <td class="border p-2">{{ response_options[response.positive_response] }}</td>
                         <td class="border p-2">
-                            {% for q in questions if q.id == response.question_id %}
-                                {{ q.negative }}
-                            {% endfor %}
+                            {% if response.question_id in questions %}
+                                {{ questions[response.question_id].negative }}
+                            {% else %}
+                                <span class="text-gray-400">問題已刪除</span>
+                            {% endif %}
                         </td>
                         <td class="border p-2">{{ response_options[response.negative_response] }}</td>
                         <td class="border p-2 text-center">
-                            <span
-                                class="px-2 py-1 rounded text-white
-                                {% if response.kano_category == 'A' %}bg-green-500
-                                {% elif response.kano_category == 'O' %}bg-blue-500
-                                {% elif response.kano_category == 'M' %}bg-yellow-500
-                                {% elif response.kano_category == 'I' %}bg-gray-500
-                                {% elif response.kano_category == 'R' %}bg-red-500
-                                {% else %}bg-purple-500{% endif %}">
+                            <span class="px-2 py-1 rounded text-white {{ kano_bg_colors[response.kano_category] }}">
                                 {{ response.kano_category }}
                             </span>
                         </td>
