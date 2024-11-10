@@ -2,11 +2,11 @@
 services:
   web:
     build: .
-    container_name: kano_survey_lite
+    container_name: kano_survey_lite #創建多組docker-compose時建議修改
     ports:
       - "12345:12345"
     volumes:
-      - ./instance:/app/instance  # 持久化資料庫
+      - ./instance_backup/kano.db:/app/kano.db   # 持久化資料庫
       - ./static:/app/static      # 靜態檔案
     restart: always
     environment:

@@ -24,12 +24,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 複製專案檔案
 COPY . .
 
-# 建立資料夾以存放 SQLite 資料庫
-RUN mkdir -p /app/instance
-
-# 設定權限
-RUN chmod -R 777 /app/instance
-
 # 暴露端口
 EXPOSE 12345
 
