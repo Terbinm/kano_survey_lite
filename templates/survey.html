@@ -1,46 +1,46 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
-    <h1 class="text-2xl font-bold mb-6">KANO 模型問卷調查</h1>
+<div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-4 sm:p-6">
+    <h1 class="text-xl sm:text-2xl font-bold mb-6">KANO 模型問卷調查</h1>
 
     <div id="error-message" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
     </div>
 
     <form id="survey-form" class="space-y-6">
         {% for question in questions %}
-        <div class="border rounded-lg p-4">
-            <h3 class="font-bold mb-4">問題 {{ question.id }}</h3>
+        <div class="border rounded-lg p-3 sm:p-4">
+            <h3 class="font-bold mb-4 text-sm sm:text-base">問題 {{ question.id }}</h3>
 
             <!-- 正向問題 -->
             <div class="mb-4">
-                <p class="mb-2">{{ question.positive }}</p>
-                <select name="q{{ question.id }}_positive" class="w-full p-2 border rounded" required>
-                    <option value="">請選擇</option>
-                    <option value="1">滿意</option>
-                    <option value="2">有些滿意</option>
-                    <option value="3">無所謂</option>
-                    <option value="4">有些不滿意</option>
-                    <option value="5">不滿意</option>
-                </select>
+                <p class="mb-2 text-sm sm:text-base">{{ question.positive }}</p>
+                <div class="btn-group-positive flex flex-wrap gap-1 sm:gap-2" data-question="{{ question.id }}">
+                    <button type="button" data-value="1" class="response-btn flex-1 min-w-0 px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm border rounded hover:bg-blue-100 transition-colors duration-200">滿意</button>
+                    <button type="button" data-value="2" class="response-btn flex-1 min-w-0 px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm border rounded hover:bg-blue-100 transition-colors duration-200">有些滿意</button>
+                    <button type="button" data-value="3" class="response-btn flex-1 min-w-0 px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm border rounded hover:bg-blue-100 transition-colors duration-200">無所謂</button>
+                    <button type="button" data-value="4" class="response-btn flex-1 min-w-0 px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm border rounded hover:bg-blue-100 transition-colors duration-200">有些不滿意</button>
+                    <button type="button" data-value="5" class="response-btn flex-1 min-w-0 px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm border rounded hover:bg-blue-100 transition-colors duration-200">不滿意</button>
+                </div>
+                <input type="hidden" name="q{{ question.id }}_positive" required>
             </div>
 
             <!-- 負向問題 -->
             <div>
-                <p class="mb-2">{{ question.negative }}</p>
-                <select name="q{{ question.id }}_negative" class="w-full p-2 border rounded" required>
-                    <option value="">請選擇</option>
-                    <option value="1">滿意</option>
-                    <option value="2">有些滿意</option>
-                    <option value="3">無所謂</option>
-                    <option value="4">有些不滿意</option>
-                    <option value="5">不滿意</option>
-                </select>
+                <p class="mb-2 text-sm sm:text-base">{{ question.negative }}</p>
+                <div class="btn-group-negative flex flex-wrap gap-1 sm:gap-2" data-question="{{ question.id }}">
+                    <button type="button" data-value="1" class="response-btn flex-1 min-w-0 px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm border rounded hover:bg-red-100 transition-colors duration-200">滿意</button>
+                    <button type="button" data-value="2" class="response-btn flex-1 min-w-0 px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm border rounded hover:bg-red-100 transition-colors duration-200">有些滿意</button>
+                    <button type="button" data-value="3" class="response-btn flex-1 min-w-0 px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm border rounded hover:bg-red-100 transition-colors duration-200">無所謂</button>
+                    <button type="button" data-value="4" class="response-btn flex-1 min-w-0 px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm border rounded hover:bg-red-100 transition-colors duration-200">有些不滿意</button>
+                    <button type="button" data-value="5" class="response-btn flex-1 min-w-0 px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm border rounded hover:bg-red-100 transition-colors duration-200">不滿意</button>
+                </div>
+                <input type="hidden" name="q{{ question.id }}_negative" required>
             </div>
         </div>
         {% endfor %}
 
-        <button type="submit" class="w-full bg-blue-500 text-white p-3 rounded hover:bg-blue-600">
+        <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white p-2 sm:p-3 rounded text-sm sm:text-base transition-colors duration-200">
             提交問卷
         </button>
     </form>
@@ -51,20 +51,59 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('survey-form');
     const errorMessage = document.getElementById('error-message');
 
+    // 處理按鈕點擊
+    document.querySelectorAll('.btn-group-positive, .btn-group-negative').forEach(group => {
+        const questionId = group.dataset.question;
+        const isPositive = group.classList.contains('btn-group-positive');
+        const inputName = `q${questionId}_${isPositive ? 'positive' : 'negative'}`;
+        const hiddenInput = form.querySelector(`input[name="${inputName}"]`);
+
+        group.querySelectorAll('.response-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // 移除同組其他按鈕的選中狀態
+                group.querySelectorAll('.response-btn').forEach(b => {
+                    b.classList.remove(
+                        'bg-blue-500', 'bg-red-500',
+                        'text-white',
+                        'border-blue-500', 'border-red-500'
+                    );
+                    b.classList.add('border');
+                });
+
+                // 設置當前按鈕的選中狀態
+                this.classList.remove('border');
+                if (isPositive) {
+                    this.classList.add('bg-blue-500', 'text-white', 'border-blue-500');
+                } else {
+                    this.classList.add('bg-red-500', 'text-white', 'border-red-500');
+                }
+
+                // 更新隱藏的input值
+                hiddenInput.value = this.dataset.value;
+            });
+        });
+    });
+
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
 
         try {
+            // 檢查是否所有問題都已回答
+            const hiddenInputs = form.querySelectorAll('input[type="hidden"]');
+            const unanswered = Array.from(hiddenInputs).some(input => !input.value);
+
+            if (unanswered) {
+                throw new Error('請回答所有問題');
+            }
+
             // 收集表單資料
             const formData = {};
-            const selects = form.querySelectorAll('select');
-
-            selects.forEach(select => {
-                const [questionId, type] = select.name.replace('q', '').split('_');
+            hiddenInputs.forEach(input => {
+                const [questionId, type] = input.name.replace('q', '').split('_');
                 if (!formData[questionId]) {
                     formData[questionId] = {};
                 }
-                formData[questionId][type] = parseInt(select.value);
+                formData[questionId][type] = parseInt(input.value);
             });
 
             // 發送請求
@@ -87,6 +126,10 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             errorMessage.textContent = `錯誤：${error.message}`;
             errorMessage.classList.remove('hidden');
+            // 3秒後自動隱藏錯誤訊息
+            setTimeout(() => {
+                errorMessage.classList.add('hidden');
+            }, 3000);
         }
     });
 });
