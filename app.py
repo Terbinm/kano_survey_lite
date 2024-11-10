@@ -7,6 +7,9 @@ import os
 import json
 from datetime import datetime
 
+# 從環境變數獲取標題，如果沒有設置則使用預設值
+APP_TITLE = os.getenv('APP_TITLE', 'KANO 問卷調查系統')
+
 
 def create_app():
     app = Flask(__name__)
@@ -288,5 +291,11 @@ def utility_processor():
         'kano_descriptions': KANO_DESCRIPTIONS
     }
 
+@app.context_processor
+def inject_titles():
+    """在所有模板中注入標題變數"""
+    return {
+        'app_title': APP_TITLE
+    }
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=12345)  # 啟動服務器

@@ -12,3 +12,4 @@ services:
     environment:
       - FLASK_ENV=production
       - PYTHONPATH=/app
+      - APP_TITLE=KANO 問卷調查系統   # 瀏覽器標題列顯示的文字
