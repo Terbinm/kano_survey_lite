@@ -1,0 +1,95 @@
+# templates/survey.html
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
+    <h1 class="text-2xl font-bold mb-6">KANO 模型問卷調查</h1>
+
+    <div id="error-message" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+    </div>
+
+    <form id="survey-form" class="space-y-6">
+        {% for question in questions %}
+        <div class="border rounded-lg p-4">
+            <h3 class="font-bold mb-4">問題 {{ question.id }}</h3>
+
+            <!-- 正向問題 -->
+            <div class="mb-4">
+                <p class="mb-2">{{ question.positive }}</p>
+                <select name="q{{ question.id }}_positive" class="w-full p-2 border rounded" required>
+                    <option value="">請選擇</option>
+                    <option value="1">滿意</option>
+                    <option value="2">有些滿意</option>
+                    <option value="3">無所謂</option>
+                    <option value="4">有些不滿意</option>
+                    <option value="5">不滿意</option>
+                </select>
+            </div>
+
+            <!-- 負向問題 -->
+            <div>
+                <p class="mb-2">{{ question.negative }}</p>
+                <select name="q{{ question.id }}_negative" class="w-full p-2 border rounded" required>
+                    <option value="">請選擇</option>
+                    <option value="1">滿意</option>
+                    <option value="2">有些滿意</option>
+                    <option value="3">無所謂</option>
+                    <option value="4">有些不滿意</option>
+                    <option value="5">不滿意</option>
+                </select>
+            </div>
+        </div>
+        {% endfor %}
+
+        <button type="submit" class="w-full bg-blue-500 text-white p-3 rounded hover:bg-blue-600">
+            提交問卷
+        </button>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('survey-form');
+    const errorMessage = document.getElementById('error-message');
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        try {
+            // 收集表單資料
+            const formData = {};
+            const selects = form.querySelectorAll('select');
+
+            selects.forEach(select => {
+                const [questionId, type] = select.name.replace('q', '').split('_');
+                if (!formData[questionId]) {
+                    formData[questionId] = {};
+                }
+                formData[questionId][type] = parseInt(select.value);
+            });
+
+            // 發送請求
+            const response = await fetch('/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                alert('問卷提交成功！');
+                window.location.href = '/results';
+            } else {
+                throw new Error(result.message || '提交失敗');
+            }
+        } catch (error) {
+            errorMessage.textContent = `錯誤：${error.message}`;
+            errorMessage.classList.remove('hidden');
+        }
+    });
+});
+</script>
+{% endblock %}

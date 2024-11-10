@@ -1,0 +1,35 @@
+# templates/base.html
+
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KANO 問卷調查系統</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 載入 jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-white shadow-lg mb-8">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between">
+                <div class="flex space-x-7">
+                    <div class="py-4">
+                        <a href="/" class="text-lg font-semibold">KANO 問卷系統</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="py-4 px-2 text-gray-700 hover:text-blue-500">填寫問卷</a>
+                    <a href="/results" class="py-4 px-2 text-gray-700 hover:text-blue-500">統計結果</a>
+                    <a href="/responses" class="py-4 px-2 text-gray-700 hover:text-blue-500">個別回應</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>
