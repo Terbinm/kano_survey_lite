@@ -1,0 +1,16 @@
+# docker-compose.yml
+version: '1.0'
+
+services:
+  web:
+    build: .
+    container_name: kano_survey_lite
+    ports:
+      - "12345:12345"
+    volumes:
+      - ./instance:/app/instance  # 持久化資料庫
+      - ./static:/app/static      # 靜態檔案
+    restart: always
+    environment:
+      - FLASK_ENV=production
+      - PYTHONPATH=/app
