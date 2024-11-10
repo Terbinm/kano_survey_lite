@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-6">
+    <h1 class="text-2xl font-bold mb-6">問題管理</h1>
+
+    <!-- 批量導入表單 -->
+    <div class="mb-8 bg-gray-50 p-4 rounded-lg">
+        <h2 class="text-xl font-semibold mb-4">批量導入問題</h2>
+        <form id="bulk-import-form" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    請輸入問題（格式：正向問題,反向問題;）每行一組
+                </label>
+                <textarea
+                    name="content"
+                    rows="5"
+                    class="w-full p-2 border rounded-md"
+                    placeholder="如：如果藏壽司提供線上訂位系統，您會覺得如何？,如果只能現場排隊，無法預約座位，您會覺得如何？;"
+                ></textarea>
+            </div>
+            <div class="flex items-center">
+                <input
+                    type="checkbox"
+                    id="clear-existing"
+                    name="clear_existing"
+                    class="mr-2"
+                >
+                <label for="clear-existing" class="text-sm text-gray-600">
+                    清除現有問題
+                </label>
+            </div>
+            <button
+                type="submit"
+                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            >
+                導入問題
+            </button>
+        </form>
+    </div>
+
+    <!-- 問題列表 -->
+    <div class="space-y-4">
+        <h2 class="text-xl font-semibold mb-4">現有問題列表</h2>
+        <div id="questions-list" class="space-y-4">
+            {% for question in questions %}
+            <div class="border rounded-lg p-4" data-question-id="{{ question.id }}">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="font-semibold">問題 {{ question.order + 1 }}</div>
+                    <div class="flex space-x-2">
+                        <button
+                            onclick="toggleQuestionStatus({{ question.id }}, {{ 'false' if question.active else 'true' }})"
+                            class="px-3 py-1 rounded text-sm {{ 'bg-green-500 hover:bg-green-600' if question.active else 'bg-gray-500 hover:bg-gray-600' }} text-white"
+                        >
+                            {{ '啟用' if question.active else '停用' }}
+                        </button>
+                        <button
+                            onclick="deleteQuestion({{ question.id }})"
+                            class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
+                        >
+                            刪除
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">正向問題</label>
+                        <input
+                            type="text"
+                            value="{{ question.positive }}"
+                            class="w-full p-2 border rounded"
+                            onchange="updateQuestion({{ question.id }}, 'positive', this.value)"
+                        >
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">反向問題</label>
+                        <input
+                            type="text"
+                            value="{{ question.negative }}"
+                            class="w-full p-2 border rounded"
+                            onchange="updateQuestion({{ question.id }}, 'negative', this.value)"
+                        >
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+// 批量導入問題
+document.getElementById('bulk-import-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    try {
+        const formData = new FormData(this);
+        const response = await fetch('/questions/bulk-import', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        if (result.status === 'success') {
+            alert('問題導入成功');
+            location.reload();
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (error) {
+        alert(`導入失敗：${error.message}`);
+    }
+});
+
+// 更新問題
+async function updateQuestion(questionId, field, value) {
+    try {
+        const response = await fetch(`/questions/${questionId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ [field]: value })
+        });
+        
+        const result = await response.json();
+        if (result.status !== 'success') {
+            throw new Error(result.message);
+        }
+    } catch (error) {
+        alert(`更新失敗：${error.message}`);
+    }
+}
+
+// 切換問題狀態
+async function toggleQuestionStatus(questionId, newStatus) {
+    try {
+        const response = await fetch(`/questions/${questionId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ active: newStatus })
+        });
+        
+        const result = await response.json();
+        if (result.status === 'success') {
+            location.reload();
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (error) {
+        alert(`狀態更新失敗：${error.message}`);
+    }
+}
+
+// 刪除問題
+async function deleteQuestion(questionId) {
+    if (!confirm('確定要刪除這個問題嗎？此操作無法復原。')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/questions/${questionId}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        if (result.status === 'success') {
+            document.querySelector(`[data-question-id="${questionId}"]`).remove();
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (error) {
+        alert(`刪除失敗：${error.message}`);
+    }
+}
+</script>
+{% endblock %}

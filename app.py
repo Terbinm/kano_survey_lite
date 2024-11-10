@@ -1,6 +1,6 @@
 # app.py
 from flask import Flask, render_template, request, jsonify, redirect, url_for
-from models import db, Survey, Response
+from models import db, Survey, Response, Question
 from config import Config
 import os
 import json
@@ -32,59 +32,8 @@ app = create_app()
 
 
 def get_questions():
-    """取得問卷問題"""
-    return [
-        {
-            'id': 1,
-            'positive': "如果藏壽司提供線上訂位系統，可以提前預約座位，您會覺得如何？",
-            'negative': "如果只能現場排隊，無法預約座位，您會覺得如何？"
-        },
-        {
-            'id': 2,
-            'positive': "如果藏壽司提供手機APP叫號，可以即時查看目前叫到幾號，您會覺得如何？",
-            'negative': "如果藏壽司只提供傳統紙本叫號，無法遠端查看進度，您會覺得如何？"
-        },
-        {
-            'id': 3,
-            'positive': "如果藏壽司提供行動支付（如：Apple Pay、LINE Pay等）結帳選項，您會覺得如何？",
-            'negative': "如果藏壽司只接受現金和信用卡支付，您會覺得如何？"
-        },
-        {
-            'id': 4,
-            'positive': "如果每5盤壽司就可以扭一次蛋，有機會獲得限定商品，您會覺得如何？ ",
-            'negative': "如果沒有任何集點或扭蛋活動，您會覺得如何？"
-        },
-        {
-            'id': 5,
-            'positive': "如果可以透過平板點餐，讓喜愛的壽司以專屬軌道方式直送座位，您會覺得如何？",
-            'negative': "如果只能等待一般迴轉轉盤送餐，無法以專屬軌道方式送餐，您會覺得如何？"
-        },
-        {
-            'id': 6,
-            'positive': "如果每盤壽司在迴轉轉盤上有次數上限避免因運轉時間過長而不新鮮，您會覺得如何？",
-            'negative': "如果每盤壽司在迴轉轉盤上沒有次數上限避免浪費食物，您會覺得如何？"
-        },
-        {
-            'id': 7,
-            'positive': "如果菜單提供多國語言（中、英、日）對照與詳細食材說明，您會覺得如何？",
-            'negative': "如果菜單只有中文說明，且無詳細食材標示，您會覺得如何？"
-        },
-        {
-            'id': 8,
-            'positive': "如果座位旁有電子螢幕即時顯示用餐盤數，方便計算消費金額，您會覺得如何？",
-            'negative': "如果需要自行數盤子或等結帳時才知道總數，您會覺得如何？"
-        },
-        {
-            'id': 9,
-            'positive': "如果透過社群網站可以查看未來一週的季節限定壽司或活動排程，您會覺得如何？ ",
-            'negative': "如果無法預知的季節限定壽司或活動排程，需要每次到店詢問，您會覺得如何？"
-        },
-        {
-            'id': 10,
-            'positive': "如果店內播放輕柔的日式音樂，音量適中，您會覺得如何？",
-            'negative': "如果店內無背景音樂，只有機器運轉與人聲，您會覺得如何？"
-        },
-    ]
+    """取得啟用的問題清單"""
+    return [q.to_dict() for q in Question.query.filter_by(active=True).order_by(Question.order).all()]
 
 
 def calculate_kano_category(positive, negative):
@@ -233,5 +182,92 @@ def delete_survey(survey_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@app.route('/questions/manage')
+def manage_questions():
+    """問題管理頁面"""
+    questions = Question.query.order_by(Question.order).all()
+    return render_template('manage_questions.html', questions=questions)
+
+@app.route('/questions/bulk-import', methods=['POST'])
+def bulk_import_questions():
+    """批量導入問題"""
+    try:
+        content = request.form.get('content', '').strip()
+        if not content:
+            return jsonify({'status': 'error', 'message': '請提供問題內容'}), 400
+
+        # 刪除現有問題
+        if request.form.get('clear_existing') == 'true':
+            Question.query.delete()
+
+        # 處理每一行問題
+        order = Question.query.count()  # 從現有問題數量開始計數
+        for line in content.split('\n'):
+            line = line.strip()
+            if not line or line.startswith('#'):  # 跳過空行和註解
+                continue
+
+            # 分割正向和反向問題
+            parts = line.split(',', 1)
+            if len(parts) != 2:
+                continue
+
+            positive, negative = parts[0].strip(), parts[1].strip()
+            if positive.endswith(';'):  # 移除可能的分號
+                positive = positive[:-1].strip()
+            if negative.endswith(';'):
+                negative = negative[:-1].strip()
+
+            # 創建新問題
+            question = Question(
+                positive=positive,
+                negative=negative,
+                order=order
+            )
+            db.session.add(question)
+            order += 1
+
+        db.session.commit()
+        return jsonify({'status': 'success', 'message': '問題導入成功'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/questions/<int:question_id>', methods=['PUT'])
+def update_question(question_id):
+    """更新單個問題"""
+    try:
+        question = Question.query.get_or_404(question_id)
+        data = request.get_json()
+
+        if 'positive' in data:
+            question.positive = data['positive']
+        if 'negative' in data:
+            question.negative = data['negative']
+        if 'order' in data:
+            question.order = data['order']
+        if 'active' in data:
+            question.active = data['active']
+
+        db.session.commit()
+        return jsonify({'status': 'success', 'data': question.to_dict()})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/questions/<int:question_id>', methods=['DELETE'])
+def delete_question(question_id):
+    """刪除問題"""
+    try:
+        question = Question.query.get_or_404(question_id)
+        db.session.delete(question)
+        db.session.commit()
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=12345)  # 啟動服務器
